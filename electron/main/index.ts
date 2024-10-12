@@ -1,6 +1,11 @@
-import { app, BrowserWindow, shell, ipcMain } from "electron";
+import { app, BrowserWindow, shell, ipcMain, dialog } from "electron";
 import { release } from "os";
 import { join } from "path";
+import api from "../utils/api";
+import edgeApi from "../utils/edge-api";
+import azureApi from "../utils/azure-api";
+import logger from "../utils/log";
+import { gptApi } from "../utils/gpt-api";
 
 // Disable GPU Acceleration for Windows 7
 //if (release().startsWith("6.1")) app.disableHardwareAcceleration();
@@ -35,19 +40,21 @@ const indexHtml = join(ROOT_PATH.dist, "index.html");
 
 async function createWindow() {
   win = new BrowserWindow({
-    width: 900,
-    // height: 600,
+    width: 1200,
+    minWidth: 900,
+    minHeight: 650,
+    height: 650,
 
     title: "Main window",
     icon: join(ROOT_PATH.public, "favicon.ico"),
-    useContentSize: true,
+    // useContentSize: true,
     frame: false,
-    maximizable: false,
-    minimizable: false,
-    fullscreenable: false,
+    // maximizable: false,
+    // minimizable: false,
+    // fullscreenable: false,
     transparent: true,
     hasShadow: false,
-    resizable: false,
+    // resizable: false,
     webPreferences: {
       preload,
       webSecurity: false,
@@ -103,7 +110,15 @@ app.on("activate", () => {
 });
 
 ipcMain.on("min", (e) => win.minimize());
-ipcMain.on("max", (e) => win.maximize());
+ipcMain.on("window-maximize", function () {
+  if (win.isFullScreen()) {
+    win.setFullScreen(false);
+  } else if (win.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win.maximize();
+  }
+});
 ipcMain.on("close", (e) => win.close());
 ipcMain.on("reload", (e) => win.reload());
 
@@ -124,3 +139,65 @@ ipcMain.handle("open-win", (event, arg) => {
 });
 const ElectronStore = require("electron-store");
 ElectronStore.initRenderer();
+
+ipcMain.on("log.info", async (event, arg) => {
+  logger.info(arg);
+});
+ipcMain.on("log.error", async (event, arg) => {
+  logger.error(arg);
+});
+
+ipcMain.on("openLogs", async (event, arg) => {
+  shell.openPath(logger.logger.transports.file.getFile().path);
+});
+ipcMain.on("openLogFolder", async (event, arg) => {
+  shell.openPath(logger.logFolder);
+});
+ipcMain.on("showItemInFolder", async (event, arg) => {
+  shell.showItemInFolder(arg);
+});
+ipcMain.on("openDevTools", async (event, arg) => {
+  if (win.webContents.isDevToolsOpened()) {
+    win.webContents.closeDevTools();
+  } else {
+    win.webContents.openDevTools({ mode: "undocked", activate: true });
+  }
+});
+
+// Get desktop path
+ipcMain.on("getDesktopPath", async (event) => {
+  event.returnValue = app.getPath("desktop");
+});
+
+ipcMain.handle("speech", async (event, ssml) => {
+  const res = api.speechApi(ssml);
+  return res;
+});
+
+ipcMain.handle("voices", async (event) => {
+  const res = api.voicesApi();
+  return res;
+});
+
+ipcMain.handle("edgeApi", async (event, ssml) => {
+  const res = edgeApi(ssml)
+  return res;
+});
+
+ipcMain.handle("azureApi", async (event, ssml, key, region) => {
+  const res = azureApi(ssml, key, region)
+  return res;
+});
+//  const result = await ipcRenderer.invoke("promptGPT", promptGPT, model, key);
+ipcMain.handle("promptGPT", async (event, promptGPT, model, key) => {
+  const res = gptApi(promptGPT, model, key);
+  return res;
+});
+
+ipcMain.handle("openFolderSelector", async (event) => {
+  const path = dialog.showOpenDialogSync(win, {
+    defaultPath: app.getPath("desktop"),
+    properties: ["openDirectory"],
+  });
+  return path;
+});

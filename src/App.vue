@@ -9,6 +9,7 @@ import Footer from "./components/footer/Footer.vue";
 const ttsStore = useTtsStore();
 ttsStore.genFormConfig();
 ttsStore.setSSMLValue();
+ttsStore.showDisclaimers();
 </script>
 
 <template>
@@ -34,6 +35,7 @@ body {
 .app {
   background-color: #f2f3f5;
   border-radius: 10px;
+  border:1px solid gray;
 }
 .el-header {
   border: 0 !important;
@@ -48,7 +50,7 @@ body {
 }
 .container {
   margin-top: 5px;
-  height: 100%;
+  height: calc(100vh - 40px);
 }
 .el-main,
 .el-footer {

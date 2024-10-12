@@ -7,15 +7,19 @@
     >
       <el-menu-item index="1">
         <el-icon><document /></el-icon>
-        <span>文本</span>
+        <span>{{ t('aside.text') }}</span>
       </el-menu-item>
       <el-menu-item index="2">
         <el-icon><Files /></el-icon>
-        <span>批量</span>
+        <span>{{ t('aside.batch') }}</span>
       </el-menu-item>
       <el-menu-item index="3">
         <el-icon><Setting /></el-icon>
-        <span>设置</span>
+        <span>{{ t('aside.settings') }}</span>
+      </el-menu-item>
+      <el-menu-item index="4">
+        <el-icon><Notebook /></el-icon>
+        <span>{{ t('aside.documents') }}</span>
       </el-menu-item>
     </el-menu>
     <Version />
@@ -25,14 +29,15 @@
 <script setup lang="ts">
 import { useTtsStore } from "@/store/store";
 import { storeToRefs } from "pinia";
+import { useI18n } from 'vue-i18n';
 import Version from "./Version.vue";
 
-const Store = require("electron-store");
-const store = new Store();
+const { t } = useI18n();
 const ttsStore = useTtsStore();
 const { page, config } = storeToRefs(ttsStore);
 
 const menuChange = (index: number) => {
+  if (index === 4) return;
   page.value.asideIndex = index.toString();
 };
 </script>
@@ -52,5 +57,12 @@ const menuChange = (index: number) => {
 }
 .el-menu {
   border-right: unset !important;
+}
+.el-menu-item {
+  box-sizing: border-box;
+  border-color: var(--el-menu-active-color);
+}
+.is-active {
+  border-left: 2px solid;
 }
 </style>
